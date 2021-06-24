@@ -199,7 +199,7 @@ func (cmd *CheckCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,7 @@ func (cmd *InfoCommand) Run(args ...string) error {
 	}
 
 	// Open the database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -872,7 +872,7 @@ func (cmd *PagesCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -966,7 +966,7 @@ func (cmd *StatsCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -1101,7 +1101,7 @@ func (cmd *BucketsCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -1164,7 +1164,7 @@ func (cmd *KeysCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -1236,7 +1236,7 @@ func (cmd *GetCommand) Run(args ...string) error {
 	}
 
 	// Open database.
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := openDB(path, 0666)
 	if err != nil {
 		return err
 	}
@@ -1304,7 +1304,7 @@ func (cmd *BenchCommand) Run(args ...string) error {
 	}
 
 	// Create database.
-	db, err := bolt.Open(options.Path, 0666, nil)
+	db, err := openDB(options.Path, 0666)
 	if err != nil {
 		return err
 	}
@@ -1979,14 +1979,14 @@ func (cmd *CompactCommand) Run(args ...string) (err error) {
 	initialSize := fi.Size()
 
 	// Open source database.
-	src, err := bolt.Open(cmd.SrcPath, 0444, nil)
+	src, err := openDB(cmd.SrcPath, 0444)
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 
 	// Open destination database.
-	dst, err := bolt.Open(cmd.DstPath, fi.Mode(), nil)
+	dst, err := openDB(cmd.DstPath, fi.Mode())
 	if err != nil {
 		return err
 	}
@@ -2025,4 +2025,12 @@ Additional options include:
 		Specifies the maximum size of individual transactions.
 		Defaults to 64KB.
 `, "\n")
+}
+
+func openDB(path string, mode os.FileMode) (*bolt.DB, error) {
+	return bolt.Open(path, mode, &bolt.Options{
+		Timeout:        1 * time.Second,
+		FreelistType:   bolt.FreelistMapType,
+		NoFreelistSync: true,
+	})
 }
